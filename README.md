@@ -1,5 +1,11 @@
 # From Data to Justice
 
+<p align="center">
+  <img src="/images/R.png" alt="R Logo" width="100" style="margin-right: 20px; vertical-align: middle;" />
+  <img src="/images/py.png" alt="Python Logo" width="100" style="vertical-align: middle; margin-top: 32px;" />
+</p>
+
+
 This Project alings with the Goal of [Murder Accountability Project](https://www.murderdata.org/), in that we have developed Machine Learning models that can detect Offender Sex and Offender Age from already solved cases.
 
 ![crime](/images/crime_rate.png)
@@ -87,7 +93,7 @@ Most popular weapon of choice is **Handgun**.
 
 - We don't see any particular pattern in Victim Age and Offender Age over the year.
   
-##### Maybe diving years into decades isn't effective lets try seasons with complex graphs.
+##### Maybe diving years into decades isn't effective lets try seasons with complex grapgs
 
 ![waffle](/images/waffle.png)
 
@@ -225,3 +231,5 @@ We can see again that **Claifornia**, **Texas**, and **New York** have high numb
     - F1 Score: 91.66%
 
 ---
+
+- Pre-trained models are provided in **Models** folder for use.
