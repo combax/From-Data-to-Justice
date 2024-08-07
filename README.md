@@ -22,7 +22,7 @@ Features includes Victim Sex, Victim Age, Year, Month, Agency, Weapon used, Vict
 
 ### EDA
 
-Exploratory data analysis was conducted with help of R present in **final R file.qmd** to determine trends in data and seeing importance of various features for prediction.
+Exploratory data analysis was conducted with help of R present in **EDA_R_code.qmd** to determine trends in data and seeing importance of various features for prediction.
 
 ---
 
