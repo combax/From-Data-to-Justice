@@ -1,0 +1,677 @@
+---
+title: "R File"
+format: pdf
+editor: visual
+---
+
+```{r, message=FALSE, warning=FALSE}
+#library(readr)
+data <- read.csv("SHR65_22.csv")
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Load the necessary libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(plotly)
+library(wordcloud)
+library(tm)
+library(webshot)
+library(ggrepel)
+library(stringr)
+library(usmap)
+library(fmsb)
+library(waffle)
+```
+
+## Univariate Graphs
+
+1.  Gauge Plot
+
+```{r, message=FALSE, warning=FALSE}
+# Summarize the data to get the count of solved and unsolved cases
+PD <- data %>%
+  group_by(Solved) %>%
+  summarise(count = n())
+
+# Calculate the percentage of solved cases
+total_cases <- sum(PD$count)
+solved_cases <- PD$count[PD$Solved == "Yes"]
+unsolved_cases <- PD$count[PD$Solved == "No"]
+solved_percentage <- solved_cases / total_cases * 100
+
+# Create a gauge plot
+fig <- plot_ly(
+  type = "indicator",
+  mode = "gauge+number",
+  value = solved_percentage,
+  number = list(suffix = "%"),
+  gauge = list(
+    axis = list(range = list(0, 100), tickwidth = 1, tickcolor = "black"),
+    bar = list(color = "#008751"),
+    bgcolor = "white",
+    borderwidth = 2,
+    bordercolor = "black",
+    steps = list(
+      list(range = c(0, 70.5), color = "#008751"),
+      list (range = c(70.5, 100), color = "grey")
+    ),
+    threshold = list(
+      line = list(color = "#333333", width = 8),
+      thickness = 10,
+      value = solved_percentage
+    )
+  )
+)
+
+fig <- fig %>%
+  layout(
+    title = list(text = "Solved cases"),
+    font = list(size = 24,family = "Berlin Sans FB"),
+    margin = list(t=50)
+  )
+
+```
+
+![Solved Cases Gauge](plot_image.png)
+
+2.  US Map of Total Cases across Cities
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+
+homicide_counts <- data %>%
+  group_by(State) %>%
+  summarise(total_homicides = n())  # Count number of rows per state
+
+# Since `plot_usmap()` requires a data frame with a `state` column, we create:
+state_data <- data.frame(state = tolower(homicide_counts$State), 
+                         total_homicides = homicide_counts$total_homicides)
+
+# Plot the map
+plot_usmap(data = state_data, values = "total_homicides", labels = FALSE) +
+  scale_fill_continuous(name = "Homicide Cases", label = scales::comma, 
+                        low = "coral2", high = "red2") +
+  labs(title = "Homicide Cases by US State",
+       fill = "Total Homicides") +
+  theme(panel.background = element_blank(),
+        legend.position = "right",
+        plot.title = element_text(hjust = 0.5,size = 20, vjust = 0.3))
+
+```
+
+3.  US Map of Total Unsolved Cases across Cities
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+
+unsolved_data <- data %>% filter(Solved == "No")
+
+unsolved_counts <- unsolved_data %>%
+  group_by(State) %>%
+  summarise(unsolved_homicides = n())
+
+state_data <- data.frame(state = tolower(unsolved_counts$State), 
+                         unsolved_homicides = 
+                           unsolved_counts$unsolved_homicides)
+
+plot_usmap(data = state_data, values = "unsolved_homicides", labels = FALSE) +
+  scale_fill_continuous(name = "Unsolved Cases", label = scales::comma, 
+                        low = "#d8f3dc", high = "#1b4332") +
+  labs(title = "Unsolved Homicide Cases by US State",
+       fill = "Unsolved Cases") +
+  theme(panel.background = element_blank(),
+        legend.position = "right",
+        plot.title = element_text(hjust = 0.9, size = 20, vjust = 0.3))
+
+```
+
+4.  Weapon Usage Word Cloud
+
+```{r, message=FALSE, warning=FALSE}
+## Wordcloud
+text <- data$Weapon
+text_corpus <- Corpus(VectorSource(text))
+text_corpus <- tm_map(text_corpus, content_transformer(tolower))
+text_corpus <- tm_map(text_corpus, removePunctuation)
+text_corpus <- tm_map(text_corpus, removeNumbers)
+text_corpus <- tm_map(text_corpus, removeWords, stopwords("english"))
+text_corpus <- tm_map(text_corpus, removeWords, c("etc","-","includes","death",
+                                                  "by","gas","hammer","club",
+                                                  "type","not","stated","does",
+                                                  "not","pistol","revolver")) 
+
+wordcloud(text_corpus, max.words = 40, random.order = FALSE, 
+          colors = brewer.pal(8, "Dark2"))
+
+```
+
+5.  Relationship Distribution
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+relation_grouped <- data %>%
+  mutate(Relationship = recode(Relationship, 
+                               "Employee" = "Work",
+                               "Employer" = "Work",
+                               "Neighbor" = "Acquaintance",
+                               "Friend" = "Acquaintance",
+                               "Wife" = "Romantic Partner",
+                               "Husband" = "Romantic Partner",
+                               "Common-law wife" = "Romantic Partner",
+                               "Common-law husband" = "Romantic Partner",
+                               "Girlfriend" = "Romantic Partner",
+                               "Boyfriend" = "Romantic Partner",
+                               "Homosexual relationship" = "Romantic Partner",
+                               "Son" = "Family",
+                               "Daughter" = "Family",
+                               "Brother" = "Family",
+                               "Father" = "Family",
+                               "Mother" = "Family",
+                               "Sister" = "Family",
+                               "Other family" = "Family",
+                               "In-law" = "Family",
+                               "Stepfather" = "Stepfamily",
+                               "Stepson" = "Stepfamily",
+                               "Stepdaughter" = "Stepfamily",
+                               "Stepmother" = "Stepfamily",
+                               "Ex-wife" = "Ex-Spouse",
+                               "Ex-husband" = "Ex-Spouse",
+                               "Relationship not determined" = "Unknown"))
+
+
+relationship_percentages <- relation_grouped %>%
+  count(Relationship) %>%
+  mutate(Percentage = n / sum(n) * 100)  # Calculate percentages
+
+# Create a ggplot with percentages
+ggplot(relationship_percentages, aes(x = reorder(Relationship, Percentage), 
+                                     y = Percentage, fill = Relationship)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%")), 
+            vjust = -0.5, size = 3, color = "black") +
+  scale_fill_brewer(palette = "Set3") +  # Use viridis color palette
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        axis.title.x = element_text(size = 14),  # Increase x-axis label size
+        axis.title.y = element_text(size = 14),
+        panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) +
+  labs(title = "Distribution of Relationships", x = "Relationship", 
+       y = "Percentage") +
+  guides(fill = FALSE) +  # Remove the legend
+  scale_y_continuous(labels = function(x) paste0(x, "%"))
+```
+
+## Bivariate Graphs
+
+1.  Population Pyramid of Victim and Offender Age
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+## Population Pyramid
+
+# Convert age columns to numeric
+data$VicAge <- as.numeric(data$VicAge)
+data$OffAge <- as.numeric(data$OffAge)
+
+# Prepare the data for the population pyramid
+victims <- data %>%
+  filter(!is.na(VicAge)) %>%
+  select(Age = VicAge) %>%
+  mutate(Group = "Victim")
+
+offenders <- data %>%
+  filter(!is.na(OffAge)) %>%
+  select(Age = OffAge) %>%
+  mutate(Group = "Offender")
+
+# Combine the two data sets
+age_data <- bind_rows(victims, offenders)
+
+# Create age groups
+age_data$AgeGroup <- cut(age_data$Age, breaks = seq(0, 100, by = 10),
+                         right = FALSE)
+
+# Summarize the data
+age_summary <- age_data %>%
+  group_by(Group, AgeGroup) %>%
+  summarize(Count = n()) %>%
+  ungroup()
+
+# Create the population pyramid chart
+ggplot(age_summary, aes(x = AgeGroup, y = ifelse(Group == "Victim", -Count, 
+                                                 Count), fill = Group)) +
+  geom_bar(stat = "identity", position = "identity") +
+  coord_flip() +
+  scale_y_continuous(labels = function(x) abs(x)/100000) +
+  labs(x = "Age Group", y = "Count(in 100K)", fill = "Group") +
+  theme_minimal() +
+  ggtitle("Distribution of Victim and Offender Ages")+
+  theme(panel.grid.major = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+```
+
+2.  Pair Plots of Victim and Offender Sex Distribution
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+
+# Count frequencies including "Unknown" values
+vicsex_counts <- table(data$VicSex)
+offsex_counts <- table(data$OffSex)
+
+# Set larger margin for better label display
+par(mfrow=c(1, 2), mar=c(0.6, 0.6, 1, 0.6) + 0.1)
+
+# Pie chart for victim sex - with legend more towards right and labels off
+pie(vicsex_counts, labels = "", main = "Victim Sex Distribution", 
+    col = c("#f07167", "#00afb9", "#ffd166"))
+
+# Legend for victim sex
+legend(x = "bottomright", y = "center", legend = names(vicsex_counts), 
+       fill = c("#f07167", "#00afb9", "#ffd166"), bty = "n", xpd = TRUE)
+
+# Pie chart for offender sex - with labels off
+pie(offsex_counts, labels = "", main = "Offender Sex Distribution", 
+    col = c("#f07167", "#00afb9", "#ffd166"))
+
+# Reset graphics settings if needed
+par(mfrow=c(1, 1))  # Reset to default single plot layout
+
+```
+
+3.  Victim Age Distribution over Years
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+
+# Step 1: Filter out rows with unknown Victim Age
+filtered_data <- data[data$VicAge != "999", ]
+
+filtered_data <- filtered_data %>%
+  mutate(Decade = cut(Year, breaks = c(seq(1972, 2022, by = 10), 2023), 
+                      right = FALSE, ))
+
+# Step 2: Calculate summary statistics by year
+victim_age_summary <- filtered_data %>%
+  mutate(VicAge = as.numeric(VicAge)) %>%
+  group_by(Decade) %>%
+  summarise(
+    median_age = median(VicAge, na.rm = TRUE),
+    q25 = quantile(VicAge, probs = 0.25, na.rm = TRUE),
+    q75 = quantile(VicAge, probs = 0.75, na.rm = TRUE)
+  )
+
+# Step 3: Create the box plot
+ggplot(filtered_data, aes(x = Decade, y = as.numeric(VicAge))) +
+  geom_boxplot(fill = "#00afb9", color = "#f07167") +
+  geom_point(data = victim_age_summary, aes(x = Decade, y = median_age), 
+             color = "red", size = 2) +
+  labs(
+    title = "Victim Age Distribution Over the Years",
+    x ="Decade",
+    y = "Victim Age",
+    caption = "Box plot showing median, quartiles"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5,size = 20),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1, size = 10),
+    axis.title.y = element_text(size = 14)
+  )
+
+```
+
+4.  Offender Age Distribution over Years
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+# Step 1: Filter out rows with unknown Offender Age
+filtered_data <- data[data$OffAge != "999", ]
+
+filtered_data <- filtered_data %>%
+  mutate(Decade = cut(Year, breaks = c(seq(1972, 2022, by = 10), 2023), 
+                      right = FALSE))
+
+# Step 2: Calculate summary statistics by year
+offender_age_summary <- filtered_data %>%
+  mutate(OffAge = as.numeric(OffAge)) %>%
+  group_by(Decade) %>%
+  summarise(
+    median_age = median(OffAge, na.rm = TRUE),
+    q25 = quantile(OffAge, probs = 0.25, na.rm = TRUE),
+    q75 = quantile(OffAge, probs = 0.75, na.rm = TRUE)
+  )
+
+# Step 3: Create the box plot
+ggplot(filtered_data, aes(x = Decade, y = as.numeric(OffAge))) +
+  geom_boxplot(fill = "#00afb9", color = "#f07167") +
+  geom_point(data = offender_age_summary, aes(x = Decade, y = median_age), 
+             color = "red", size = 2) +
+  labs(
+    title = "Offender Age Distribution Over the Years",
+    x ="Decade",
+    y = "Offender Age",
+    caption = "Box plot showing median, quartiles"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5,size = 20),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1, size = 10),
+    axis.title.y = element_text(size = 14)
+  )
+
+```
+
+5.  Line Chart for Crime Patterns over the Years
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+# Step 1: Aggregate data by year for total crimes
+crime_counts <- data %>%
+  group_by(Year) %>%
+  summarise(total_crimes = n())  # Count number of rows (crimes) per year
+
+# Step 2: Aggregate data by year for unsolved crimes
+unsolved_crimes <- data %>%
+  filter(Solved == "No") %>%
+  group_by(Year) %>%
+  summarise(unsolved_crimes = n())  # Count number of unsolved crimes per year
+
+# Step 3: Aggregate data by year for solved crimes
+solved_crimes <- data %>%
+  filter(Solved == "Yes") %>%
+  group_by(Year) %>%
+  summarise(solved_crimes = n())  # Count number of solved crimes per year
+
+# Step 4: Merge total crimes, unsolved crimes, and solved crimes data
+crime_data <- merge(crime_counts, unsolved_crimes, by = "Year", all = TRUE)
+crime_data <- merge(crime_data, solved_crimes, by = "Year", all = TRUE)
+
+# Step 5: Create the line plot with three lines (total, unsolved, solved)
+
+ggplot(crime_data, aes(x = Year)) +
+  geom_line(aes(y = total_crimes, color = "Total Crimes"), size = 1.5) +
+  geom_line(aes(y = unsolved_crimes, color = "Unsolved Crimes"), size = 1.5) +
+  geom_line(aes(y = solved_crimes, color = "Solved Crimes"), size = 1.5) +
+  labs(
+    title = "Crime Rate Over the Years",
+    x = "Year",
+    y = "Number of Crimes",
+    caption = "Line plot showing trend of crime rates"
+  ) +
+  scale_color_manual(
+    values = c("Total Crimes" = "#1f77b4", "Unsolved Crimes" = "#d62728", 
+               "Solved Crimes" = "#588157"),
+    breaks = c("Total Crimes", "Solved Crimes", "Unsolved Crimes"),
+    labels = c("Total Crimes", "Solved Crimes", "Unsolved Crimes")
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5,size = 20),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.x = element_text(size = 14), 
+    axis.title.y = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    panel.grid.major.y = element_line(color = "gray", linetype = "dotted"),
+    panel.grid.minor = element_blank()  # Remove minor grid lines
+  )
+
+```
+
+6.  Radar Plot of Total Cases by Agent Type
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+
+agent_summary <- data %>%
+  group_by(Agentype) %>%
+  summarise(total_cases = n())
+
+# Find the maximum and minimum values for total cases
+max_val <- max(agent_summary$total_cases)
+min_val <- min(agent_summary$total_cases)
+
+# Prepare data for total cases
+radar_data <- as.data.frame(rbind(
+  max = rep(max_val, nrow(agent_summary)),
+  min = rep(min_val, nrow(agent_summary)),
+  agent_summary$total_cases
+))
+
+# Assign column names
+colnames(radar_data) <- agent_summary$Agentype
+
+# Create the radar chart
+par(mar = c(2, 2, 2, 2))
+radarchart(
+  radar_data,
+  axistype = 1,
+  pcol = "blue",           # Polygon color
+  pfcol = scales::alpha("blue", 0.3),  # Polygon fill color with transparency
+  plwd = 2,                # Line width
+  cglcol = "grey",         # Grid line color
+  cglty = 1,               # Grid line type
+  axislabcol = "grey",     # Axis label color
+  caxislabels = seq(0, max_val, length.out = 5),  # Axis labels
+  vlcex = 0.8             # Variable label size
+)
+
+# Add a title
+title("Total Cases by Agent Type")
+
+```
+
+7.  Unsolved Cases by Agent Type
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+# Summarize the data to get the percentage of unsolved cases by Agentype
+summary_df <- data %>%
+  group_by(Agentype) %>%
+  summarise(total_cases = n(),
+            unsolved_cases = sum(Solved == "No"),
+            unsolved_percentage = (unsolved_cases / total_cases) * 100) %>%
+  arrange(unsolved_percentage)
+
+# Modify long labels with line breaks
+summary_df$Agentype <- gsub("Primary federal LE", "Primary\nfederal LE", 
+                            summary_df$Agentype)
+summary_df$Agentype <- gsub("Primary state LE", "Primary\nstate LE", 
+                            summary_df$Agentype)
+
+# Define custom colors for each section
+custom_colors <- c("Municipal police" = "#6a040f",
+                   "County police" = "#9d0208",
+                   "Special police" = "#d00000",
+                   "Sheriff" = "#dc2f02",
+                   "Regional police" = "#e85d04",
+                   "Tribal" = "#f48c06",
+                   "Primary\nstate LE" = "#ffba08",
+                   "Primary\nfederal LE" = "#faa307")
+
+# Create a polar bar plot with adjustments
+ggplot(summary_df, aes(x = reorder(Agentype, unsolved_percentage), 
+                       y = unsolved_percentage, fill = Agentype)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "x") +
+  labs(title = "Percentage of Unsolved Cases by Agency Type",
+       x = "",
+       y = "") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        plot.margin = unit(c(1, 1, 1, 1), "cm")) +  # Increased plot margins
+  geom_text(aes(label = paste0(round(unsolved_percentage, 1), "%")), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", 
+            size = 3) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0.5, 
+                                   size = 8),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14)) +
+  scale_fill_manual(values = custom_colors) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+```
+
+8.  State wise lollipop graph of Victim Gender
+
+```{r lollipop-plot, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+state_gender_summary <- data %>%
+  group_by(State, VicSex) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Plot lollipop chart
+ggplot(state_gender_summary, aes(x = State, y = count, color = VicSex)) +
+  geom_segment(aes(xend = State, yend = 0), size = 1) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("coral","cyan3","grey"))+
+  labs(title = "Incidents State and Victim Gender", x = "State",
+       y = "Count of Incidents", color = "Gender") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,
+                                   margin = margin(t = -10, r = 0, b = 0, 
+                                                   l = 0)),
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14),  
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
+
+```
+
+9. Stacked Area Chart for Weapon used over the years in solved and unsolved cases
+
+```{r stacked-area, message=FALSE, warning=FALSE}
+# weapon over years
+# Plot the stacked area chart
+# Group data by Year and Weapon and count occurrences
+
+my_custom_colors <- c(
+  "Handgun - pistol, revolver, etc" = "#1f77b4",  # Dark blue
+  "Knife or cutting instrument" = "lightsalmon",      # Orange
+  "Firearm, type not stated" = "darkseagreen3",         # Green
+  "Personal weapons, includes beating" = "tomato4", # Red
+  "Shotgun" = "#9467bd",                          # Purple
+  "Other or type unknown" = "peru",#"#8c564b",            # Brown
+  "Rifle" = "#e377c2",                            # Pink
+  "Blunt object - hammer, club, etc" = "azure3", # Gray
+  "Strangulation - hanging" = "#bcbd22",          # Olive
+  "Fire" = "gold",#"hotpink4",                             # Cyan
+  "Asphyxiation - includes death by gas" = "darkblue", # Light blue
+  "Narcotics or drugs, sleeping pills" = "purple",#"#ffbb78",   # Light orange
+  "Other gun" = "red",                        # Light green
+  "Drowning" = "darkorchid4",                         # Light red
+  "Weapon Not Reported" = "gray0",              # Light purple
+  "Poison - does not include gas" = "#c49c94",    # Light brown
+  "Explosives" = "#f7b6d2",                       # Light pink
+  "Pushed or thrown out window" = "#c7c7c7"       # Light gray
+)
+
+
+# Filter data for Solved = "Yes"
+weapon_usage_solved_yes <- data %>%
+  filter(Solved == "Yes") %>%
+  group_by(Year, Weapon) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Filter data for Solved = "No"
+weapon_usage_solved_no <- data %>%
+  filter(Solved == "No") %>%
+  group_by(Year, Weapon) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+ggplot(weapon_usage_solved_yes, aes(x = Year, y = count, fill = Weapon)) +
+  geom_area(alpha = 0.6) +
+  labs(title = "Weapon Usage Over Years For Solved Cases", 
+       x = "Year", y = "Count of Incidents") +
+  scale_fill_manual(values = my_custom_colors)+
+  #scale_fill_brewer(palette = "Set3")+
+  theme(panel.grid.minor = element_blank(),
+        #panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+
+ggplot(weapon_usage_solved_no, aes(x = Year, y = count, fill = Weapon)) +
+  geom_area(alpha = 0.6) +
+  labs(title = "Weapon Usage Over Years For Unsolved Cases",
+       x = "Year", y = "Count of Incidents") +
+  scale_fill_manual(values = my_custom_colors)+
+  #scale_fill_brewer(palette = "Set3")+
+  theme(panel.grid.minor = element_blank(),
+        #panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+
+```
+
+## Multivariate Graphs
+
+1.  Waffle Plot of Victim Gender by Age and Season
+
+```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+  # Transform the data to create age groups
+  age_data <- data %>%
+    mutate(AgeGroup = case_when(
+    OffAge >= 0  & OffAge <= 17 ~ "0-17",
+    OffAge >= 18 & OffAge <= 34 ~ "18-34",
+    OffAge >= 35 & OffAge <= 54 ~ "35-54",
+    OffAge >= 55 & OffAge <= 99 ~ "55-99",
+    OffAge >= 100 ~ NA_character_
+    )) %>%
+    mutate(Seasons = case_when(
+      Month %in% c("March", "April", "May") ~ "Spring",
+      Month %in% c("June", "July", "August") ~ "Summer",
+      Month %in% c("September", "October", "November") ~ "Fall",
+      Month %in% c("December","January","February")~ "Winter"
+    ))
+  
+  # percentage of churned customers in each age group and contract type
+  gender_data <- age_data %>%
+    filter(!is.na(AgeGroup)) %>%
+    group_by(AgeGroup, Seasons,OffSex) %>%
+    summarise(Count = n()) %>%
+    spread(OffSex, Count, fill = 0) %>%
+    mutate(Total = Male+Female,
+           Male_Percentage = Male / Total * 100,
+           Female_Percentage = Female / Total * 100) %>%
+    ungroup()
+  
+  
+  # 10x10 grid dataframe
+  waffle_grid <- expand.grid(x = 1:10, y = 1:10)
+  
+    # Replicating the grid for each combination of AgeGroup and Contract
+  waffle_data <- gender_data %>%
+    mutate(id = row_number()) %>%
+    right_join(waffle_grid, by = character()) %>%
+    group_by(id) %>%
+    mutate(Fill = ifelse(row_number() <= Male_Percentage, "Male", "Female"),
+           Fill = factor(Fill, levels = c("Female", "Male"))) %>%
+    ungroup()
+  
+  # Creating the waffle plot
+  waffle_plots <- waffle_data %>%
+    ggplot(aes(x = x, y = y, fill = Fill)) +
+    geom_tile(color = "darkgrey", size = 0.5) +
+    facet_grid(AgeGroup ~ Seasons) +
+    scale_fill_manual(values = c("Male" = "coral", "Female" = "lightblue"),
+                      name = "Gender",
+                      breaks = c("Male","Female"),
+                      labels = c("Male","Female"),
+                      guide = guide_legend()) +
+    theme_minimal() +
+    labs(title = "Offender Gender Percentage by Age Group and Season",
+         x = "Seasons", 
+         y = "Age Group") +
+    theme(plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title.x = element_text(size = 14), 
+          axis.title.y = element_text(size = 14),
+          panel.grid = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA, size = 1),
+          strip.text = element_text(size = 14) )
+  
+  print(waffle_plots)
+ 
+ 
+```
