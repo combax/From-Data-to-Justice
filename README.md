@@ -225,5 +225,3 @@ We can see again that **Claifornia**, **Texas**, and **New York** have high numb
     - F1 Score: 91.66%
 
 ---
-
-- Pre-trained models are provided in **Models** folder for use.
