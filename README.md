@@ -1,10 +1,10 @@
 # From Data to Justice
 
 <p align="center">
-  <img src="/images/R.png" alt="R Logo" width="100" style="display:inline-block; margin-right: 20px; vertical-align: middle;" />
-  <img src="/images/py.png" alt="Python Logo" width="100" style="display:inline-block; vertical-align: middle; margin-top: 32px;" />
+  <a href="https://go-skill-icons.vercel.app/">
+    <img src="https://go-skill-icons.vercel.app/api/icons?i=r,py" />
+  </a>
 </p>
-
 
 This Project alings with the Goal of [Murder Accountability Project](https://www.murderdata.org/), in that we have developed Machine Learning models that can detect Offender Sex and Offender Age from already solved cases.
 
