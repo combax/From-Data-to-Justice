@@ -2,8 +2,7 @@
 
 <p align="center">
   <img src="/images/R.png" alt="R Logo" width="100" style="display:inline-block; margin-right: 20px; vertical-align: middle;" />
-  <div style="height: 32px;"></div>
-  <img src="/images/py.png" alt="Python Logo" width="100" style="display:inline-block; vertical-align: middle;" />
+  <img src="/images/py.png" alt="Python Logo" width="100" style="display:inline-block; vertical-align: middle; margin-top: 32px;" />
 </p>
 
 
