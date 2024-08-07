@@ -74,7 +74,7 @@ fig <- fig %>%
 
 ```
 
-![Solved Cases Gauge](plot_image.png)
+![Solved Cases Gauge](./images/solved_unsolved.png)
 
 2.  US Map of Total Cases across Cities
 
@@ -103,16 +103,12 @@ plot_usmap(data = state_data, values = "total_homicides", labels = FALSE) +
 3.  US Map of Total Unsolved Cases across Cities
 
 ```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
-
-unsolved_data <- data %>% filter(Solved == "No")
-
-unsolved_counts <- unsolved_data %>%
+state_data <- data %>%
+  filter(Solved == "No") %>%
   group_by(State) %>%
-  summarise(unsolved_homicides = n())
+  summarise(unsolved_homicides = n()) %>%
+  mutate(state = tolower(State))
 
-state_data <- data.frame(state = tolower(unsolved_counts$State), 
-                         unsolved_homicides = 
-                           unsolved_counts$unsolved_homicides)
 
 plot_usmap(data = state_data, values = "unsolved_homicides", labels = FALSE) +
   scale_fill_continuous(name = "Unsolved Cases", label = scales::comma, 
@@ -414,6 +410,7 @@ ggplot(crime_data, aes(x = Year)) +
 
 ```
 
+
 6.  Radar Plot of Total Cases by Agent Type
 
 ```{r, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
@@ -509,7 +506,7 @@ ggplot(summary_df, aes(x = reorder(Agentype, unsolved_percentage),
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 ```
 
-8.  State wise lollipop graph of Victim Gender
+8. State wise lollipop graph of Victim Gender
 
 ```{r lollipop-plot, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
 state_gender_summary <- data %>%
@@ -536,72 +533,189 @@ ggplot(state_gender_summary, aes(x = State, y = count, color = VicSex)) +
 
 ```
 
-9. Stacked Area Chart for Weapon used over the years in solved and unsolved cases
-
-```{r stacked-area, message=FALSE, warning=FALSE}
-# weapon over years
-# Plot the stacked area chart
-# Group data by Year and Weapon and count occurrences
-
-my_custom_colors <- c(
-  "Handgun - pistol, revolver, etc" = "#1f77b4",  # Dark blue
-  "Knife or cutting instrument" = "lightsalmon",      # Orange
-  "Firearm, type not stated" = "darkseagreen3",         # Green
-  "Personal weapons, includes beating" = "tomato4", # Red
-  "Shotgun" = "#9467bd",                          # Purple
-  "Other or type unknown" = "peru",#"#8c564b",            # Brown
-  "Rifle" = "#e377c2",                            # Pink
-  "Blunt object - hammer, club, etc" = "azure3", # Gray
-  "Strangulation - hanging" = "#bcbd22",          # Olive
-  "Fire" = "gold",#"hotpink4",                             # Cyan
-  "Asphyxiation - includes death by gas" = "darkblue", # Light blue
-  "Narcotics or drugs, sleeping pills" = "purple",#"#ffbb78",   # Light orange
-  "Other gun" = "red",                        # Light green
-  "Drowning" = "darkorchid4",                         # Light red
-  "Weapon Not Reported" = "gray0",              # Light purple
-  "Poison - does not include gas" = "#c49c94",    # Light brown
-  "Explosives" = "#f7b6d2",                       # Light pink
-  "Pushed or thrown out window" = "#c7c7c7"       # Light gray
-)
-
-
-# Filter data for Solved = "Yes"
-weapon_usage_solved_yes <- data %>%
-  filter(Solved == "Yes") %>%
-  group_by(Year, Weapon) %>%
+```{r lollipop-plot2, fig.width=10, fig.height=6, dpi=300, message=FALSE, warning=FALSE}
+state_gender_summary <- data %>%
+  group_by(State, OffSex) %>%
   summarise(count = n()) %>%
   ungroup()
 
-# Filter data for Solved = "No"
-weapon_usage_solved_no <- data %>%
-  filter(Solved == "No") %>%
-  group_by(Year, Weapon) %>%
-  summarise(count = n()) %>%
-  ungroup()
-
-ggplot(weapon_usage_solved_yes, aes(x = Year, y = count, fill = Weapon)) +
-  geom_area(alpha = 0.6) +
-  labs(title = "Weapon Usage Over Years For Solved Cases", 
-       x = "Year", y = "Count of Incidents") +
-  scale_fill_manual(values = my_custom_colors)+
-  #scale_fill_brewer(palette = "Set3")+
-  theme(panel.grid.minor = element_blank(),
-        #panel.grid.major = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
-
-ggplot(weapon_usage_solved_no, aes(x = Year, y = count, fill = Weapon)) +
-  geom_area(alpha = 0.6) +
-  labs(title = "Weapon Usage Over Years For Unsolved Cases",
-       x = "Year", y = "Count of Incidents") +
-  scale_fill_manual(values = my_custom_colors)+
-  #scale_fill_brewer(palette = "Set3")+
-  theme(panel.grid.minor = element_blank(),
-        #panel.grid.major = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5, face = "bold", size = 14))
+# Plot lollipop chart
+ggplot(state_gender_summary, aes(x = State, y = count, color = OffSex)) +
+  geom_segment(aes(xend = State, yend = 0), size = 1) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("coral","cyan3","grey"))+
+  labs(title = "Incidents State and Offender Gender", x = "State",
+       y = "Count of Incidents", color = "Gender") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,
+                                   margin = margin(t = -10, r = 0, b = 0, 
+                                                   l = 0)),
+        axis.title.x = element_text(size = 14), 
+        axis.title.y = element_text(size = 14),  
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
 
 ```
+
+
+9. Stacked bar chart of Weapons and Offender Gender
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+# Preprocess the Weapon column
+data <- data %>%
+  mutate(
+    Weapon = str_replace(Weapon, " - .*", ""),
+    Weapon = case_when(
+      Weapon == "Narcotics or drugs, sleeping pills" ~ "Narcotics",
+      Weapon == "Firearm, type not stated" ~ "Firearm",
+      Weapon == "Knife or cutting instrument" ~ "Knife",
+      Weapon == "Other or type unknown" ~ "Unknown",
+      Weapon == "Personal weapons, includes beating" ~ "Personal Weapon",
+      Weapon == "Pushed or thrown out window" ~ "Pushed",
+      Weapon == "Weapon Not Reported" ~ "Not Reported",
+      TRUE ~ Weapon
+    )
+  )
+
+# Summarize the data
+weapon_summary <- data %>%
+  group_by(Weapon, OffSex) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(Weapon) %>%
+  mutate(total = sum(count)) %>%
+  ungroup() %>%
+  arrange(desc(total))
+
+# Create the stacked horizontal bar graph
+ggplot(weapon_summary, aes(x = count, y = reorder(Weapon, total), fill = OffSex)) +
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(aes(x = total, label = scales::comma(total)), 
+            hjust = -0.2, size = 3, color = "black") +
+  labs(title = "Distribution of Weapons by Offender Sex",
+       x = "Count",
+       y = "Weapon",
+       fill = "Offender Sex") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.text.y = element_text(angle = 0, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.margin = margin(t = 20, r = 50, b = 20, l = 20, unit = "pt"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_x_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.15))) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+10. Dot plot of Victim Race to number of unsolved cases
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggbeeswarm)
+
+# Preprocess the data
+unsolved_data <- data %>%
+  filter(VicAge != 999) %>%
+  mutate(VicAge = as.numeric(VicAge),
+         VicRace = case_when(
+           VicRace == "American Indian or Alaskan Native" ~ "American",
+           VicRace == "Native Hawaiian or Pacific Islander" ~ "Hawaiian",
+           TRUE ~ VicRace
+         )) %>% filter(Solved=="No")
+
+# Define custom color mapping
+color_mapping <- c(
+  'American' = '#1b9aaa',
+  'Asian' = '#ffc43d',
+  'Black' = '#06d6a0',
+  'Hawaiian' = '#abc4ff',
+  'Unknown' = '#9467bd',
+  'White' = '#ef476f'
+)
+
+# Create the categorical dot plot
+ggplot(unsolved_data, aes(x = VicRace, y = VicAge)) +
+  geom_quasirandom(aes(color = VicRace), 
+                   method = "smiley", 
+                   alpha = 0.5, 
+                   size = 1.5, 
+                   width = 0.3) +
+  scale_color_manual(values = color_mapping) +
+  labs(title = "Distribution of Victim Ages by Race in Unsolved Cases",
+       x = "Victim Race",
+       y = "Victim Age",
+       color = "Victim Race") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_line(color = "gray90"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_cartesian(ylim = c(0, 100))
+```
+
+11. Dot plot of Victim Race to total number of cases
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(ggbeeswarm)
+
+# Preprocess the data
+data <- data %>%
+  filter(VicAge != 999) %>%
+  mutate(VicAge = as.numeric(VicAge),
+         VicRace = case_when(
+           VicRace == "American Indian or Alaskan Native" ~ "American",
+           VicRace == "Native Hawaiian or Pacific Islander" ~ "Hawaiian",
+           TRUE ~ VicRace
+         ))
+
+# Define custom color mapping
+color_mapping <- c(
+  'American' = '#1b9aaa',
+  'Asian' = '#ffc43d',
+  'Black' = '#06d6a0',
+  'Hawaiian' = '#abc4ff',
+  'Unknown' = '#9467bd',
+  'White' = '#ef476f'
+)
+
+# Create the categorical dot plot
+ggplot(data, aes(x = VicRace, y = VicAge)) +
+  geom_quasirandom(aes(color = VicRace), 
+                   method = "smiley", 
+                   alpha = 0.5, 
+                   size = 1.5, 
+                   width = 0.3) +
+  scale_color_manual(values = color_mapping) +
+  labs(title = "Distribution of Victim Ages by Race in All Cases",
+       x = "Victim Race",
+       y = "Victim Age",
+       color = "Victim Race") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_line(color = "gray90"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  coord_cartesian(ylim = c(0, 100))
+```
+
 
 ## Multivariate Graphs
 
@@ -672,6 +786,4 @@ ggplot(weapon_usage_solved_no, aes(x = Year, y = count, fill = Weapon)) +
           strip.text = element_text(size = 14) )
   
   print(waffle_plots)
- 
- 
 ```
