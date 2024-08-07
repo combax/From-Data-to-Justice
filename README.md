@@ -87,7 +87,7 @@ Most popular weapon of choice is **Handgun**.
 
 - We don't see any particular pattern in Victim Age and Offender Age over the year.
   
-##### Maybe diving years into decades isn't effective lets try seasons with complex grapgs
+##### Maybe diving years into decades isn't effective lets try seasons with complex graphs.
 
 ![waffle](/images/waffle.png)
 
