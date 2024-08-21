@@ -138,7 +138,7 @@ We can see again that **Claifornia**, **Texas**, and **New York** have high numb
 
 ### Machine Learning
 
-- Here we levrage power of Python to train model as displayed in **pythonnotebookhere** to create algorithms to predict Offender Age and Offender Sex.
+- Here we levrage power of Python to train model as displayed in **notebook.ipynb** to create algorithms to predict Offender Age and Offender Sex.
 - Due to **complex nature** of data and **categorical columns having small unique patterns** with some with high cardinality using linear methods was discarded.
 - Tree based methods like decision trees, XGBoost and Random forests are more viable.
 
@@ -231,5 +231,3 @@ We can see again that **Claifornia**, **Texas**, and **New York** have high numb
     - F1 Score: 91.66%
 
 ---
-
-- Pre-trained models are provided in **Models** folder for use.
