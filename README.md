@@ -8,6 +8,11 @@
 
 This Project alings with the Goal of [Murder Accountability Project](https://www.murderdata.org/), in that we have developed Machine Learning models that can detect Offender Sex and Offender Age from already solved cases.
 
+This projects provides:
+- Detailed EDA of homicidal cases throughout USA from 1972 to 2023.
+- Decision Tree Model to predict Offender's Age in unsolved cases. (84.83% R squared).
+- Random Forest Model to predict Offender's Sex in unsolved cases. (92.72% Accuracy). 
+
 ![crime](/images/crime_rate.png)
 
 ---
