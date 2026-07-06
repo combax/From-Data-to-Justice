@@ -1,0 +1,4 @@
+# Extras for the companion notebook only — the pipeline and API need just requirements.txt
+-r requirements.txt
+jupyter==1.1.1
+matplotlib==3.11.0
