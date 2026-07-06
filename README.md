@@ -6,7 +6,6 @@
 
 </div>
 
-> **In 10 seconds:**
 > - **Models** — offender **sex** (classifier) and **age** (regressor) predicted from case attributes of **573k solved FBI homicides** (1976–2022), built to profile unknown offenders in unsolved cases
 > - **Scores** (held-out test, leak-free) — sex: macro-F1 **0.635**, ROC-AUC 0.75 (always-Male baseline: 0.469) · age: R² **0.257**, MAE 8.4 years
 > - **Experiments** — **9 oversampling strategies × 5 model families**, samplers fit on the training fold only; winner **SMOTEENN + XGBoost**; full grid in [`experiments/results/`](experiments/results/)
