@@ -1,0 +1,9 @@
+task,strategy,model,n_train,sampler_s,fit_s,rmse,mae,r2,note,error
+regression,none,DecisionTree,366829,0.0,2.8,16.2478,11.7913,-0.5661,,
+regression,none,ExtraTrees,366829,0.0,15.7,12.3328,9.1961,0.0977,,
+regression,none,RandomForest,366829,0.0,12.9,11.8622,8.9002,0.1652,,
+regression,none,HistGradientBoosting,366829,0.0,3.6,11.2627,8.43,0.2475,,
+regression,none,XGBoost,366829,0.0,2.2,11.2613,8.4226,0.2476,,
+regression,none,XGBoost-tuned,366829,0.0,7.1,11.2882,8.4157,0.244,,
+regression,none,Dummy-mean,366829,0.0,0.0,12.9832,10.1495,-0.0,,
+regression,SMOTE_age_as_classes,XGBoost-tuned,1754577,4.4,37.8,11.8617,8.9134,0.1653,methodologically invalid (age is not a class label); included to close the question,

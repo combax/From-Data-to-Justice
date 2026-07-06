@@ -1,11 +1,19 @@
 # From Data to Justice
 
-<p align="center">
-  <img src="images/R.png" height="56" alt="R" />&nbsp;&nbsp;&nbsp;
-  <img src="images/py.png" height="56" alt="Python" />
-</p>
+<div align="center">
 
-This project aligns with the goal of the [Murder Accountability Project](https://www.murderdata.org/): machine learning models that predict **offender sex** and **offender age** from case attributes, trained on solved homicides so they can be applied to unsolved ones. It compares **9 oversampling strategies × 5 model families** under a strictly leak-free protocol and ships as a production pipeline: package, FastAPI service, Docker image, AWS deployment.
+![R](images/R.png)&nbsp;&nbsp;&nbsp;![Python](images/py.png)
+
+</div>
+
+> **In 10 seconds:**
+> - **Models** — offender **sex** (classifier) and **age** (regressor) predicted from case attributes of **573k solved FBI homicides** (1976–2022), built to profile unknown offenders in unsolved cases
+> - **Scores** (held-out test, leak-free) — sex: macro-F1 **0.635**, ROC-AUC 0.75 (always-Male baseline: 0.469) · age: R² **0.257**, MAE 8.4 years
+> - **Experiments** — **9 oversampling strategies × 5 model families**, samplers fit on the training fold only; winner **SMOTEENN + XGBoost**; full grid in [`experiments/results/`](experiments/results/)
+> - **Graphs** — 16 EDA charts (R) below, plus an executed [notebook](notebook.ipynb) with the leak demo, sweep chart and test report
+> - **Ships as** — Python package `shr/` + FastAPI `/predict` + Docker image + AWS App Runner scripts, pre-trained models included
+
+This project aligns with the goal of the [Murder Accountability Project](https://www.murderdata.org/): machine learning models that predict **offender sex** and **offender age** from case attributes, trained on solved homicides so they can be applied to unsolved ones.
 
 ![crime](images/crime_rate.png)
 

@@ -1,0 +1,30 @@
+{
+  "trained_at": "2026-07-06T17:51:29-0400",
+  "shr_version": "1.0.0",
+  "versions": {
+    "scikit-learn": "1.9.0",
+    "imbalanced-learn": "0.14.2",
+    "xgboost": "3.3.0",
+    "pandas": "3.0.3"
+  },
+  "n_train": 458537,
+  "n_test": 114635,
+  "female_share_test": 0.1166,
+  "classifier": "SMOTEENN + XGBoost(n_estimators=300, lr=0.1, max_depth=6)",
+  "regressor": "XGBoost(n_estimators=300, lr=0.1, max_depth=6), no resampling",
+  "classification_test": {
+    "accuracy": 0.8374,
+    "balanced_accuracy": 0.6465,
+    "f1_macro": 0.6349,
+    "f1_female": 0.363,
+    "precision_female": 0.334,
+    "recall_female": 0.3976,
+    "roc_auc": 0.7501,
+    "pr_auc_female": 0.3109
+  },
+  "regression_test": {
+    "rmse_years": 11.1764,
+    "mae_years": 8.3524,
+    "r2": 0.2566
+  }
+}
